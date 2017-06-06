@@ -1,6 +1,6 @@
 module Poll exposing (..)
 
-import Html exposing (Attribute, Html, button, div, input, text)
+import Html exposing (Attribute, Html, button, div, h1, input, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 
@@ -73,23 +73,41 @@ addYesAndNo list =
 
 renderAnswerField : Int -> String -> Html Msg
 renderAnswerField index answer =
-    input [ type_ "text", aStyle, placeholder ("option " ++ toString (index + 1)), value answer, onInput (ChangeAnswer index) ]
+    input [ type_ "text", answerClass, placeholder ("option " ++ toString (index + 1)), value answer, onInput (ChangeAnswer index) ]
         []
-
-
-aStyle =
-    class "w3"
-
-
-qStyle =
-    class "w5"
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ input [ qStyle, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question ]
-        , div [] (List.indexedMap renderAnswerField model.answers)
-        , div [] [ text (toString model.answers) ]
-        , button [ onClick AddAnswer ] [ text "another answer" ]
-        ]
+    div [ containerClass ]
+        ([ h1 [ titleClass ] [ text "Easy Poll" ]
+         , textarea [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question ]
+         ]
+            ++ List.indexedMap renderAnswerField model.answers
+            ++ [ button [ createButtonClass, onClick AddAnswer ] [ text "Create!" ]
+               ]
+        )
+
+
+
+-- STYLES
+
+
+containerClass =
+    class "avenir w-100 bg-white center pa4 br4"
+
+
+titleClass =
+    class "tc mv5"
+
+
+questionClass =
+    class "center f3 db w-90 br3 ba bw2 b--blue pa3 ma3"
+
+
+answerClass =
+    class "center db w-90 center ba br3 pa3 ma3"
+
+
+createButtonClass =
+    class "center db w4 br-pill ba bw2 b--yellow bg-white pa3 ma4"
