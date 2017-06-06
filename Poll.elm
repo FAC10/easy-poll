@@ -1,6 +1,6 @@
 module Poll exposing (..)
 
-import Html exposing (Attribute, Html, button, div, h1, input, text)
+import Html exposing (Attribute, Html, button, div, h1, input, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 
@@ -81,7 +81,7 @@ view : Model -> Html Msg
 view model =
     div [ containerClass ]
         ([ h1 [ titleClass ] [ text "Easy Poll" ]
-         , input [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question ]
+         , textarea [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question ]
          ]
             ++ List.indexedMap renderAnswerField model.answers
             ++ [ button [ createButtonClass, onClick AddAnswer ] [ text "Create!" ]
@@ -94,7 +94,7 @@ view model =
 
 
 containerClass =
-    class "avenir w-100 bg-white center pa4 ma5 br4"
+    class "avenir w-100 bg-white center pa4 br4"
 
 
 titleClass =
