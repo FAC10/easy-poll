@@ -3,6 +3,7 @@ module Poll exposing (..)
 import Html exposing (Attribute, Html, button, div, h1, input, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
+import Style exposing (..)
 
 
 main =
@@ -13,10 +14,15 @@ main =
 -- MODEL
 
 
+type Display
+    = Create
+    | Success
+
+
 type alias Model =
     { question : String
     , answers : List String
-    , test : String
+    , display : Display
     }
 
 
@@ -24,7 +30,7 @@ model : Model
 model =
     { question = ""
     , answers = [ "", "" ]
-    , test = ""
+    , display = Create
     }
 
 
@@ -35,7 +41,7 @@ model =
 type Msg
     = ChangeQuestion String
     | ChangeAnswer Int String
-    | AddAnswer
+    | CreatePoll
 
 
 update : Msg -> Model -> Model
@@ -48,17 +54,11 @@ update msg model =
                 { model | question = newQuestion }
 
         ChangeAnswer index newAnswer ->
-            let
-                updatedList =
-                    List.indexedMap (replaceAtIndexWith index newAnswer) model.answers
-            in
-                if not (List.member "" updatedList) then
-                    { model | answers = updatedList ++ [ "" ] }
-                else
-                    { model | answers = updatedList }
+            { model | answers = List.indexedMap (replaceAtIndexWith index newAnswer) model.answers }
 
-        AddAnswer ->
-            { model | answers = model.answers ++ [ "" ] }
+        CreatePoll ->
+            -- request to api here
+            { model | display = Success }
 
 
 replaceAtIndexWith : Int -> String -> Int -> String -> String
@@ -94,35 +94,18 @@ renderAnswerField index answer =
 
 view : Model -> Html Msg
 view model =
-    div [ containerClass ]
-        ([ h1 [ titleClass ] [ text "Easy Poll" ]
-         , textarea [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question ]
-         ]
-            ++ List.indexedMap renderAnswerField model.answers
-            ++ [ button [ createButtonClass, onClick AddAnswer ] [ text "Create!" ]
-               ]
-        )
-
-
-
--- STYLES
-
-
-containerClass =
-    class "avenir w-100 bg-white center pa4 br4"
-
-
-titleClass =
-    class "tc mv5"
-
-
-questionClass =
-    class "center f3 db w-90 br3 ba bw2 b--blue pa3 ma3"
-
-
-answerClass =
-    class "center db w-90 center ba br3 pa3 ma3"
-
-
-createButtonClass =
-    class "center db w4 br-pill ba bw2 b--yellow bg-white pa3 ma4"
+    if model.display == Create then
+        div [ containerClass ]
+            ([ h1 [ titleClass ] [ text "Easy Poll" ]
+             , textarea [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question ]
+             ]
+                ++ List.indexedMap renderAnswerField model.answers
+                ++ [ button [ createButtonClass, onClick CreatePoll ] [ text "Create!" ]
+                   ]
+            )
+    else if model.display == Success then
+        div [ containerClass ]
+            [ text "Success Page"
+            ]
+    else
+        div [] [ text "Something went wrong" ]
