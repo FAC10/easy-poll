@@ -43,7 +43,12 @@ update msg model =
     case msg of
         ChangeQuestion newQuestion ->
             if newQuestion == "is" then
-                { model | question = newQuestion, answers = addYesAndNo model.answers }
+                if not (List.member "" model.answers) then
+                    { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
+                else if (List.length model.answers == 2) then
+                    { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
+                else
+                    { model | question = newQuestion, answers = addYesAndNo model.answers }
             else
                 { model | question = newQuestion }
 
