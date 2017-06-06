@@ -48,7 +48,10 @@ update msg model =
                 { model | question = newQuestion }
 
         ChangeAnswer index newAnswer ->
-            { model | answers = List.indexedMap (replaceAtIndexWith index newAnswer) model.answers }
+            if not (List.member "" (List.indexedMap (replaceAtIndexWith index newAnswer) model.answers)) then
+                { model | answers = List.indexedMap (replaceAtIndexWith index newAnswer) model.answers ++ [ "" ] }
+            else
+                { model | answers = List.indexedMap (replaceAtIndexWith index newAnswer) model.answers }
 
         AddAnswer ->
             { model | answers = model.answers ++ [ "" ] }
@@ -71,9 +74,16 @@ addYesAndNo list =
 -- VIEW
 
 
+generatePlaceholder : Int -> Attribute Msg
+generatePlaceholder index =
+    if index < 2 then
+        placeholder ("option " ++ toString (index + 1))
+    else
+        placeholder "(optional)"
+
 renderAnswerField : Int -> String -> Html Msg
 renderAnswerField index answer =
-    input [ type_ "text", aStyle, placeholder ("option " ++ toString (index + 1)), value answer, onInput (ChangeAnswer index) ]
+    input [ type_ "text", aStyle, generatePlaceholder index, value answer, onInput (ChangeAnswer index) ]
         []
 
 
