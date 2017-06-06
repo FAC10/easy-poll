@@ -48,10 +48,14 @@ update msg model =
                 { model | question = newQuestion }
 
         ChangeAnswer index newAnswer ->
-            if not (List.member "" (List.indexedMap (replaceAtIndexWith index newAnswer) model.answers)) then
-                { model | answers = List.indexedMap (replaceAtIndexWith index newAnswer) model.answers ++ [ "" ] }
-            else
-                { model | answers = List.indexedMap (replaceAtIndexWith index newAnswer) model.answers }
+            let
+                updatedList =
+                    List.indexedMap (replaceAtIndexWith index newAnswer) model.answers
+            in
+                if not (List.member "" updatedList) then
+                    { model | answers = updatedList ++ [ "" ] }
+                else
+                    { model | answers = updatedList }
 
         AddAnswer ->
             { model | answers = model.answers ++ [ "" ] }
@@ -80,6 +84,7 @@ generatePlaceholder index =
         placeholder ("option " ++ toString (index + 1))
     else
         placeholder "(optional)"
+
 
 renderAnswerField : Int -> String -> Html Msg
 renderAnswerField index answer =
