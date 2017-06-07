@@ -1,0 +1,17 @@
+{
+  "questions": [
+    { "id": "1",
+      "question": "test question?",
+      "answers": [
+        {
+          "text": "One two three",
+          "votes": 1
+        },
+        {
+          "text": "ok sure",
+          "votes": 1
+        }
+      ]
+    }
+  ]
+}
