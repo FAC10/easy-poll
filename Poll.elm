@@ -57,7 +57,14 @@ update msg model =
                 { model | question = newQuestion }
 
         ChangeAnswer index newAnswer ->
-            { model | answers = List.indexedMap (replaceAtIndexWith index newAnswer) model.answers }
+            let
+                updatedList =
+                    List.indexedMap (replaceAtIndexWith index newAnswer) model.answers
+            in
+            if not (List.member "" updatedList) then
+                { model | answers = updatedList ++ [ "" ] }
+            else
+                { model | answers = updatedList }
 
         CreatePoll ->
             -- request to api here
@@ -78,11 +85,9 @@ addYesAndNo list =
 
 
 
-
 -- listIsEmpty : List -> Bool
 -- listIsEmpty list =
 --     List.isEmpty (List.filter String.isEmpty list)
-
 -- VIEW
 
 
