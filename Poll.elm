@@ -49,7 +49,10 @@ update msg model =
     case msg of
         ChangeQuestion newQuestion ->
             if newQuestion == "is" then
-                { model | question = newQuestion, answers = addYesAndNo model.answers }
+                if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
+                    { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
+                else
+                    { model | question = newQuestion }
             else
                 { model | question = newQuestion }
 
@@ -74,6 +77,11 @@ addYesAndNo list =
         (List.indexedMap (replaceAtIndexWith 0 "yes") list)
 
 
+
+
+-- listIsEmpty : List -> Bool
+-- listIsEmpty list =
+--     List.isEmpty (List.filter String.isEmpty list)
 
 -- VIEW
 
