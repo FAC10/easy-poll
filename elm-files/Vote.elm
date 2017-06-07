@@ -6,6 +6,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode exposing (..)
 import Style exposing (..)
+import Navigation
 
 
 -- MODEL
@@ -17,22 +18,30 @@ type alias Answer =
     , votes : Int
     }
 
+type Display
+    = Voting
+    | Result
+
 
 type alias Model =
     { question : String
+    , questionId : String
     , canSelectMultiple : Bool
     , answers : List Answer
+    , display : Display
     }
 
 
 model : Model
 model =
     { question = "Is this test question useful or not?"
+    , questionId = "1"
     , canSelectMultiple = False
     , answers =
         [ { text = "test answer", isSelected = False, votes = 0 }
         , { text = "test answer 2", isSelected = False, votes = 0 }
         ]
+    , display = Voting
     }
 
 
@@ -40,13 +49,13 @@ getQuestionData =
     Cmd.none
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( model, getQuestionData )
+init : Navigation.Location -> ( Model, Cmd Msg )
+init location =
+    ( { model | questionId = String.dropLeft 1 location.hash }, getQuestionData )
 
 
 main =
-    Html.program
+    Navigation.program UrlChange
         { init = init
         , view = view
         , update = update
@@ -72,6 +81,7 @@ toggleSpecificAnswer indexToToggle answers =
 
 type Msg
     = NewQuestion (Result Http.Error String)
+    | UrlChange Navigation.Location
     | ToggleAnswer Int
     | Vote
 
@@ -81,6 +91,9 @@ update msg model =
     case msg of
         NewQuestion (Ok data) ->
             ( { model | question = data }, Cmd.none )
+
+        UrlChange location ->
+            ( { model | questionId = String.dropLeft 1 location.hash }, Cmd.none )
 
         NewQuestion (Err _) ->
             ( model, Cmd.none )
@@ -108,5 +121,6 @@ view model =
         ([ h1 [ titleClass ] [ text model.question ] ]
             ++ List.indexedMap renderAnswerButton model.answers
             ++ [ button [ createButtonClass, onClick Vote ] [ text "Vote" ]
+               , div [] [ text model.questionId ]
                ]
         )
