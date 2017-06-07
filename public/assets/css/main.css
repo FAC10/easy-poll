@@ -1,0 +1,17 @@
+input:focus, textarea:focus {
+  outline: none;
+  border: solid 5px;
+  border-color: rgb(0, 55, 55);
+}
+textarea:focus {
+  border-width: 8px;
+}
+
+input, textarea {
+  transition: border-width 0.125s;
+  transition: border-color: 3s;
+}
+
+button {
+  outline: none;
+}
