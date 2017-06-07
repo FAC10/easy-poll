@@ -1,0 +1,11 @@
+{
+  "name": "easy-poll",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/FAC10/easy-poll.git",
+  "author": "Matt Lubel <matt_lubel@hotmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "json-server": "0.9.5"
+  }
+}
