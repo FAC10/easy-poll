@@ -1,12 +1,12 @@
 module Vote exposing (..)
 
-import Html exposing (Attribute, Html, button, div, h1, input, text, textarea, span)
+import Html exposing (Attribute, Html, button, div, h1, input, span, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode exposing (..)
-import Style exposing (..)
 import Navigation
+import Style exposing (..)
 
 
 -- MODEL
@@ -17,6 +17,7 @@ type alias Answer =
     , isSelected : Bool
     , votes : Int
     }
+
 
 type Display
     = Voting
@@ -117,11 +118,15 @@ renderAnswerButton index answer =
     button [ answerButtonClass answer.isSelected, onClick (ToggleAnswer index) ]
         [ text answer.text ]
 
+
+
 -- renderVoteGradient : Int -> String
 -- renderVoteGradient votes =
 --     let percentage = model.answers in
 --         "linear-gradient(90deg, green 50%, white 50%);"
 --     -- "linear-gradient(90deg, green 50%, white 50%);"
+
+
 getVoteGradient : Int -> Answer -> String
 getVoteGradient index answer =
     if Maybe.withDefault 0 (List.maximum (List.map .votes model.answers)) <= answer.votes then
@@ -132,11 +137,11 @@ getVoteGradient index answer =
 
 renderResultAnswer : Int -> Answer -> Html Msg
 renderResultAnswer index answer =
-    div [ answerButtonClass False, style [("background", "linear-gradient(90deg, " ++ (getVoteGradient index answer) ++ "%, white 0%)")] ]
+    div [ answerButtonClass False, style [ ( "background", "linear-gradient(90deg, " ++ getVoteGradient index answer ++ "%, white 0%)" ) ] ]
         [ --div [style [("width", "50%"), ("background", "#B1FFBD")]] []
-         span [] [text answer.text]
-        , span [ resultAnswerVotes ] [text ( toString answer.votes ++ " votes" ) ]
-    ]
+          span [] [ text answer.text ]
+        , span [ resultAnswerVotes ] [ text (toString answer.votes ++ " votes") ]
+        ]
 
 
 view : Model -> Html Msg
