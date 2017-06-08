@@ -34,6 +34,10 @@ model =
     }
 
 
+yesNoWords =
+    [ "am", "are", "is", "do", "does" ]
+
+
 
 -- UPDATE
 
@@ -48,7 +52,32 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         ChangeQuestion newQuestion ->
-            if newQuestion == "is" then
+            let
+                questionWords =
+                    String.split " " newQuestion
+
+                firstWord =
+                    Maybe.withDefault "" (List.head questionWords)
+
+                containsOr =
+                    List.member "or" questionWords
+            in
+            if List.length (String.split " or " newQuestion) == 2 then
+                let
+                    firstSection =
+                        Maybe.withDefault "" (List.head (String.split " or " newQuestion))
+
+                    firstOption =
+                        Maybe.withDefault "" (List.head (List.reverse (String.split " " firstSection)))
+
+                    secondSection =
+                        Maybe.withDefault "" (List.head (List.reverse (String.split " or " newQuestion)))
+
+                    secondOption =
+                        Maybe.withDefault "" (List.head (String.split " " secondSection))
+                in
+                { model | question = newQuestion, answers = addOrOptions firstOption secondOption model.answers }
+            else if List.member (String.toLower firstWord) yesNoWords then
                 if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
                     { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
                 else
@@ -77,6 +106,11 @@ replaceAtIndexWith replaceIndex newItem currIndex item =
         newItem
     else
         item
+
+
+addOrOptions opt1 opt2 list =
+    List.indexedMap (replaceAtIndexWith 1 opt2)
+        (List.indexedMap (replaceAtIndexWith 0 opt1) list)
 
 
 addYesAndNo list =
