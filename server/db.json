@@ -1,7 +1,8 @@
 {
   "questions": [
+
     { "id": "1",
-      "question": "test question?",
+      "text": "test question?",
       "answers": [
         {
           "text": "One two three",
@@ -13,5 +14,6 @@
         }
       ]
     }
+
   ]
 }
