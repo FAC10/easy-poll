@@ -1,15 +1,23 @@
 module Vote exposing (..)
 
 import Html exposing (Attribute, Html, button, div, h1, input, span, text, textarea)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode exposing (..)
+import Json.Decode as Decode
+import Json.Decode.Pipeline exposing (decode, required)
 import Navigation
 import Style exposing (..)
 
 
 -- MODEL
+
+
+type alias Question =
+    { id : String
+    , text : String
+    , answers : List Answer
+    }
 
 
 type alias Answer =
@@ -25,37 +33,67 @@ type Display
 
 
 type alias Model =
-    { question : String
-    , questionId : String
-    , canSelectMultiple : Bool
-    , answers : List Answer
+    { question : Question
     , display : Display
     }
 
 
 model : Model
 model =
-    { question = "Is this test question useful or not?"
-    , questionId = "1"
-    , canSelectMultiple = False
-    , answers =
-        [ { text = "test answer", isSelected = False, votes = 4 }
-        , { text = "test answer 2", isSelected = False, votes = 2 }
-        , { text = "test answer 3", isSelected = False, votes = 20 }
-        , { text = "test answer 4", isSelected = False, votes = 15 }
-        , { text = "test answer 5", isSelected = False, votes = 6 }
-        ]
+    { question =
+        { text = "Loading..."
+        , id = ""
+        , answers =
+            []
+        }
     , display = Voting
     }
 
 
-getQuestionData =
-    Cmd.none
+
+-- REQUEST
+
+
+getQuestionData : String -> Cmd Msg
+getQuestionData questionId =
+    let
+        url =
+            "http://localhost:4000/questions?id=" ++ questionId
+
+        request =
+            Http.get url questionsDecoder
+    in
+    Http.send NewQuestion request
+
+
+questionsDecoder : Decode.Decoder (List Question)
+questionsDecoder =
+    Decode.list questionDecoder
+
+
+answerDecoder : Decode.Decoder Answer
+answerDecoder =
+    decode Answer
+        |> required "text" Decode.string
+        |> required "isSelected" Decode.bool
+        |> required "votes" Decode.int
+
+
+questionDecoder : Decode.Decoder Question
+questionDecoder =
+    decode Question
+        |> required "id" Decode.string
+        |> required "text" Decode.string
+        |> required "answers" (Decode.list answerDecoder)
+
+
+
+-- INIT and MAIN
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-    ( { model | questionId = String.dropLeft 1 location.hash }, getQuestionData )
+    ( model, getQuestionData (String.dropLeft 1 location.hash) )
 
 
 main =
@@ -84,7 +122,7 @@ toggleSpecificAnswer indexToToggle answers =
 
 
 type Msg
-    = NewQuestion (Result Http.Error String)
+    = NewQuestion (Result Http.Error (List Question))
     | UrlChange Navigation.Location
     | ToggleAnswer Int
     | Vote
@@ -93,17 +131,29 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewQuestion (Ok data) ->
-            ( { model | question = data }, Cmd.none )
+        NewQuestion (Ok questionList) ->
+            ( { model | question = Maybe.withDefault model.question (List.head questionList) }, Cmd.none )
 
-        UrlChange location ->
-            ( { model | questionId = String.dropLeft 1 location.hash }, Cmd.none )
-
-        NewQuestion (Err _) ->
+        NewQuestion (Err err) ->
             ( model, Cmd.none )
 
+        UrlChange location ->
+            ( model, getQuestionData (String.dropLeft 1 location.hash) )
+
         ToggleAnswer indexToToggle ->
-            ( { model | answers = toggleSpecificAnswer indexToToggle model.answers }, Cmd.none )
+            let
+                question =
+                    model.question
+
+                updatedAnswers =
+                    toggleSpecificAnswer indexToToggle model.question.answers
+
+                updatedQuestion =
+                    { question | answers = updatedAnswers }
+
+                -- = { model.question | answers = ( toggleSpecificAnswer indexToToggle model.question.answers ) }
+            in
+            ( { model | question = updatedQuestion }, Cmd.none )
 
         Vote ->
             ( { model | display = Result }, Cmd.none )
@@ -122,22 +172,22 @@ renderAnswerButton index answer =
 
 -- renderVoteGradient : Int -> String
 -- renderVoteGradient votes =
---     let percentage = model.answers in
+--     let percentage = model.question.answers in
 --         "linear-gradient(90deg, green 50%, white 50%);"
 --     -- "linear-gradient(90deg, green 50%, white 50%);"
 
 
-getVoteGradient : Int -> Answer -> String
-getVoteGradient index answer =
-    if Maybe.withDefault 0 (List.maximum (List.map .votes model.answers)) <= answer.votes then
-        "#B1FFBD " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.answers))) * 100)
+getVoteGradient : Model -> Int -> Answer -> String
+getVoteGradient model index answer =
+    if Maybe.withDefault 0 (List.maximum (List.map .votes model.question.answers)) <= answer.votes then
+        "#B1FFBD " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.question.answers))) * 100)
     else
-        "#FFB1B1 " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.answers))) * 100)
+        "#FFB1B1 " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.question.answers))) * 100)
 
 
-renderResultAnswer : Int -> Answer -> Html Msg
-renderResultAnswer index answer =
-    div [ answerButtonClass False, style [ ( "background", "linear-gradient(90deg, " ++ getVoteGradient index answer ++ "%, white 0%)" ) ] ]
+renderResultAnswer : Model -> Int -> Answer -> Html Msg
+renderResultAnswer model index answer =
+    div [ answerButtonClass False, style [ ( "background", "linear-gradient(90deg, " ++ getVoteGradient model index answer ++ "%, white 0%)" ) ] ]
         [ --div [style [("width", "50%"), ("background", "#B1FFBD")]] []
           span [] [ text answer.text ]
         , span [ resultAnswerVotes ] [ text (toString answer.votes ++ " votes") ]
@@ -148,16 +198,15 @@ view : Model -> Html Msg
 view model =
     if model.display == Voting then
         div [ containerClass ]
-            ([ h1 [ titleClass ] [ text model.question ] ]
-                ++ List.indexedMap renderAnswerButton model.answers
+            ([ h1 [ titleClass ] [ text model.question.text ] ]
+                ++ List.indexedMap renderAnswerButton model.question.answers
                 ++ [ button [ createButtonClass, onClick Vote ] [ text "Vote" ]
-                   , div [] [ text model.questionId ]
                    ]
             )
     else
         div [ containerClass ]
-            ([ h1 [ titleClass ] [ text model.question ] ]
-                ++ List.indexedMap renderResultAnswer model.answers
-                ++ [ div [] [ text model.questionId ]
+            ([ h1 [ titleClass ] [ text model.question.text ] ]
+                ++ List.indexedMap (renderResultAnswer model) model.question.answers
+                ++ [ div [ class "tc" ] [ text "Share this poll!" ]
                    ]
             )

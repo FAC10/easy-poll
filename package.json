@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "format": "elm-format elm-files/",
-    "build": "elm-make elm-files/Poll.elm --output='public/poll.js' && elm-make elm-files/Vote.elm --output='public/vote.js'"
+    "build": "elm-make elm-files/Poll.elm --output='public/poll.js' && elm-make elm-files/Vote.elm --output='public/vote.js'",
+    "start": "npm run build && node server/api.js"
   },
   "dependencies": {
     "json-server": "0.9.5"
