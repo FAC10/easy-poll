@@ -4,7 +4,7 @@ import Html.Attributes exposing (class, style)
 
 
 containerClass =
-    class "avenir w-100 bg-white center pa4 br4"
+    class "avenir w-100 center pa4 br4"
 
 
 titleClass =

@@ -174,7 +174,7 @@ view model =
             , h3 [ style [ ( "text-align", "center" ) ] ] [ text "Poll created successfully!" ]
             , label [ urlLabelStyle ] [ text "Share the following vote URL:" ]
             , input [ value model.url, urlInputClass ] []
-            , button [ createButtonClass ] [ text "Copy Link!" ]
+            , button [ createButtonClass ] [ text "Share!" ]
             ]
     else
         div [] [ text "Something went wrong" ]
