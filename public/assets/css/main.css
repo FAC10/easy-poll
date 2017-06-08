@@ -1,3 +1,8 @@
+body {
+  min-height: 100vh;
+  background: radial-gradient(white 60%, rgba(170, 212, 255, 0.25) 100%);
+}
+
 input:focus, textarea:focus {
   outline: none;
   border: solid 5px;

@@ -1,6 +1,6 @@
 module Poll exposing (..)
 
-import Html exposing (Attribute, Html, button, div, h1, input, text, textarea)
+import Html exposing (Attribute, Html, button, div, h1, h3, input, label, span, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Style exposing (..)
@@ -23,6 +23,7 @@ type alias Model =
     { question : String
     , answers : List String
     , display : Display
+    , url : String
     , hasEditedAnswers : Bool
     }
 
@@ -32,6 +33,7 @@ model =
     { question = ""
     , answers = [ "", "" ]
     , display = Create
+    , url = "www.easy-poll.co.uk/#p0ll1d"
     , hasEditedAnswers = False
     }
 
@@ -54,7 +56,7 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         ChangeQuestion newQuestion ->
-            if not (model.hasEditedAnswers) then
+            if not model.hasEditedAnswers then
                 let
                     questionWords =
                         String.split " " newQuestion
@@ -76,14 +78,19 @@ update msg model =
                         secondSection =
                             Maybe.withDefault "" (List.head (List.reverse (String.split " or " newQuestion)))
 
-                        secondOption = Maybe.withDefault "" (List.head (String.split "?" (
-                            Maybe.withDefault "" (List.head (String.split " " secondSection)))))
+                        secondOption =
+                            Maybe.withDefault ""
+                                (List.head
+                                    (String.split "?"
+                                        (Maybe.withDefault "" (List.head (String.split " " secondSection)))
+                                    )
+                                )
                     in
                     { model | question = newQuestion, answers = addOrOptions firstOption secondOption model.answers }
                 else if List.member (String.toLower firstWord) yesNoWords then
---                    if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
-                    if not (model.hasEditedAnswers) then
-                        if (List.length model.answers == 2) then
+                    --                    if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
+                    if not model.hasEditedAnswers then
+                        if List.length model.answers == 2 then
                             { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
                         else
                             { model | question = newQuestion, answers = addYesAndNo model.answers }
@@ -91,11 +98,10 @@ update msg model =
                         { model | question = newQuestion }
                 else
                     { model | question = newQuestion }
+            else if List.length (List.filter (\a -> not (a == "")) model.answers) == 0 then
+                { model | question = newQuestion, hasEditedAnswers = False }
             else
-                if List.length (List.filter (\a -> not(a == "")) model.answers) == 0 then
-                    { model | question = newQuestion, hasEditedAnswers = False }
-                else
-                    { model | question = newQuestion }
+                { model | question = newQuestion }
 
         ChangeAnswer index newAnswer ->
             let
@@ -164,7 +170,11 @@ view model =
             )
     else if model.display == Success then
         div [ containerClass ]
-            [ text "Success Page"
+            [ span [ successIconStyle, class "fa fa-check-circle-o" ] []
+            , h3 [ style [ ( "text-align", "center" ) ] ] [ text "Poll created successfully!" ]
+            , label [ urlLabelStyle ] [ text "Share the following vote URL:" ]
+            , input [ value model.url, urlInputClass ] []
+            , button [ createButtonClass ] [ text "Share!" ]
             ]
     else
         div [] [ text "Something went wrong" ]

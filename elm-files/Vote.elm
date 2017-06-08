@@ -44,8 +44,7 @@ model =
         { text = "Loading..."
         , id = ""
         , answers =
-            [
-            ]
+            []
         }
     , display = Voting
     }

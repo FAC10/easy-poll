@@ -1,10 +1,10 @@
 module Style exposing (..)
 
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, style)
 
 
 containerClass =
-    class "avenir w-100 bg-white center pa4 br4"
+    class "avenir w-100 center pa4 br4"
 
 
 titleClass =
@@ -25,6 +25,22 @@ answerClass =
 
 createButtonClass =
     class "center db w4 br-pill ba bw2 b--yellow bg-white pa3 ma4"
+
+
+
+-- success page
+
+
+urlLabelStyle =
+    style [ ( "display", "block" ), ( "text-align", "center" ) ]
+
+
+urlInputClass =
+    class "center tc db w-80 center ba br3 pa3 ma3"
+
+
+successIconStyle =
+    style [ ( "font-size", "15em" ), ( "color", "#357edd" ), ( "display", "block" ), ( "text-align", "center" ), ( "margin", "0.1em" ) ]
 
 
 
