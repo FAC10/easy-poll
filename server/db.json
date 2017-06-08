@@ -1,17 +1,22 @@
 {
   "questions": [
     { "id": "1",
-      "text": "test question?",
+      "text": "Is this app good or bad?",
       "answers": [
         {
-          "text": "One two three",
+          "text": "good",
+          "isSelected": false,
+          "votes": 12
+        },
+        {
+          "text": "bad",
           "isSelected": false,
           "votes": 1
         },
         {
-          "text": "ok sure",
+          "text": "not sure",
           "isSelected": false,
-          "votes": 1
+          "votes": 2
         }
       ]
     }

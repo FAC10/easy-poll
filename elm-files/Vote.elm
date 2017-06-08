@@ -41,13 +41,10 @@ type alias Model =
 model : Model
 model =
     { question =
-        { text = "Is this test question useful or not?"
-        , id = "1"
+        { text = "Loading..."
+        , id = ""
         , answers =
-            [ { text = "test answer", isSelected = False, votes = 4 }
-            , { text = "test answer 2", isSelected = False, votes = 2 }
-            , { text = "test answer 3", isSelected = False, votes = 20 }
-            , { text = "test answer 4", isSelected = False, votes = 15 }
+            [
             ]
         }
     , display = Voting
@@ -205,13 +202,12 @@ view model =
             ([ h1 [ titleClass ] [ text model.question.text ] ]
                 ++ List.indexedMap renderAnswerButton model.question.answers
                 ++ [ button [ createButtonClass, onClick Vote ] [ text "Vote" ]
-                   , div [] [ text model.question.id ]
                    ]
             )
     else
         div [ containerClass ]
             ([ h1 [ titleClass ] [ text model.question.text ] ]
                 ++ List.indexedMap (renderResultAnswer model) model.question.answers
-                ++ [ div [] [ text model.question.id ]
+                ++ [ div [ class "tc" ] [ text "Share this poll!" ]
                    ]
             )
