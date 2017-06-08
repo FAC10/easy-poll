@@ -1,10 +1,11 @@
 module Vote exposing (..)
 
 import Html exposing (Attribute, Html, button, div, h1, input, span, text, textarea)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode exposing (..)
+import Json.Decode as Decode
+import Json.Decode.Pipeline exposing (decode, required)
 import Navigation
 import Style exposing (..)
 
@@ -47,16 +48,45 @@ model =
             , { text = "test answer 2", isSelected = False, votes = 2 }
             , { text = "test answer 3", isSelected = False, votes = 20 }
             , { text = "test answer 4", isSelected = False, votes = 15 }
-            , { text = "test answer 5", isSelected = False, votes = 6 }
             ]
         }
     , display = Voting
     }
 
 
-getQuestionData questionId =
-    Cmd.none
+-- REQUEST
 
+getQuestionData : String -> Cmd Msg
+getQuestionData questionId =
+    let
+      url =
+        "http://localhost:4000/questions?id=" ++ questionId
+      request =
+        Http.get url questionsDecoder
+    in
+      Http.send NewQuestion request
+
+
+
+questionsDecoder : Decode.Decoder (List Question)
+questionsDecoder =
+    Decode.list questionDecoder
+
+answerDecoder : Decode.Decoder Answer
+answerDecoder =
+    decode Answer
+        |> required "text" Decode.string
+        |> required "isSelected" Decode.bool
+        |> required "votes" Decode.int
+
+questionDecoder : Decode.Decoder Question
+questionDecoder =
+    decode Question
+        |> required "id" Decode.string
+        |> required "text" Decode.string
+        |> required "answers" (Decode.list answerDecoder)
+
+-- INIT and MAIN
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
@@ -89,7 +119,7 @@ toggleSpecificAnswer indexToToggle answers =
 
 
 type Msg
-    = NewQuestion (Result Http.Error Question)
+    = NewQuestion (Result Http.Error (List Question))
     | UrlChange Navigation.Location
     | ToggleAnswer Int
     | Vote
@@ -98,14 +128,17 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewQuestion (Ok data) ->
-            ( { model | question = data }, Cmd.none )
+        NewQuestion (Ok questionList) ->
+            ( { model | question = Maybe.withDefault model.question (List.head questionList) }, Cmd.none )
+
+
+        NewQuestion (Err err) ->
+            ( model, Cmd.none )
+
 
         UrlChange location ->
             ( model, getQuestionData (String.dropLeft 1 location.hash) )
 
-        NewQuestion (Err _) ->
-            ( model, Cmd.none )
 
         ToggleAnswer indexToToggle ->
             let
@@ -144,17 +177,17 @@ renderAnswerButton index answer =
 --     -- "linear-gradient(90deg, green 50%, white 50%);"
 
 
-getVoteGradient : Int -> Answer -> String
-getVoteGradient index answer =
+getVoteGradient : Model -> Int -> Answer -> String
+getVoteGradient model index answer =
     if Maybe.withDefault 0 (List.maximum (List.map .votes model.question.answers)) <= answer.votes then
         "#B1FFBD " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.question.answers))) * 100)
     else
         "#FFB1B1 " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.question.answers))) * 100)
 
 
-renderResultAnswer : Int -> Answer -> Html Msg
-renderResultAnswer index answer =
-    div [ answerButtonClass False, style [ ( "background", "linear-gradient(90deg, " ++ getVoteGradient index answer ++ "%, white 0%)" ) ] ]
+renderResultAnswer : Model -> Int -> Answer -> Html Msg
+renderResultAnswer model index answer =
+    div [ answerButtonClass False, style [ ( "background", "linear-gradient(90deg, " ++ (getVoteGradient model) index answer ++ "%, white 0%)" ) ] ]
         [ --div [style [("width", "50%"), ("background", "#B1FFBD")]] []
           span [] [ text answer.text ]
         , span [ resultAnswerVotes ] [ text (toString answer.votes ++ " votes") ]
@@ -174,7 +207,7 @@ view model =
     else
         div [ containerClass ]
             ([ h1 [ titleClass ] [ text model.question.text ] ]
-                ++ List.indexedMap renderResultAnswer model.question.answers
+                ++ List.indexedMap (renderResultAnswer model) model.question.answers
                 ++ [ div [] [ text model.question.id ]
                    ]
             )

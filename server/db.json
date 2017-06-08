@@ -1,19 +1,24 @@
 {
   "questions": [
-
     { "id": "1",
       "text": "test question?",
       "answers": [
         {
           "text": "One two three",
+          "isSelected": false,
           "votes": 1
         },
         {
           "text": "ok sure",
+          "isSelected": false,
           "votes": 1
         }
       ]
     }
+  ],
 
-  ]
+  "test": {
+    "text": "elm is cool but hard"
+  }
+
 }
