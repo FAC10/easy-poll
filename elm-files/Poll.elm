@@ -23,6 +23,7 @@ type alias Model =
     { question : String
     , answers : List String
     , display : Display
+    , hasEditedAnswers : Bool
     }
 
 
@@ -31,11 +32,12 @@ model =
     { question = ""
     , answers = [ "", "" ]
     , display = Create
+    , hasEditedAnswers = False
     }
 
 
 yesNoWords =
-    [ "am", "are", "is", "do", "does" ]
+    [ "am", "are", "is", "do", "does", "was", "were", "did", "will", "have", "can", "has", "could", "should", "may", "must", "dare", "ought", "shall", "might", "would" ]
 
 
 
@@ -52,38 +54,48 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         ChangeQuestion newQuestion ->
-            let
-                questionWords =
-                    String.split " " newQuestion
-
-                firstWord =
-                    Maybe.withDefault "" (List.head questionWords)
-
-                containsOr =
-                    List.member "or" questionWords
-            in
-            if List.length (String.split " or " newQuestion) == 2 then
+            if not (model.hasEditedAnswers) then
                 let
-                    firstSection =
-                        Maybe.withDefault "" (List.head (String.split " or " newQuestion))
+                    questionWords =
+                        String.split " " newQuestion
 
-                    firstOption =
-                        Maybe.withDefault "" (List.head (List.reverse (String.split " " firstSection)))
+                    firstWord =
+                        Maybe.withDefault "" (List.head questionWords)
 
-                    secondSection =
-                        Maybe.withDefault "" (List.head (List.reverse (String.split " or " newQuestion)))
-
-                    secondOption =
-                        Maybe.withDefault "" (List.head (String.split " " secondSection))
+                    containsOr =
+                        List.member "or" questionWords
                 in
-                { model | question = newQuestion, answers = addOrOptions firstOption secondOption model.answers }
-            else if List.member (String.toLower firstWord) yesNoWords then
-                if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
-                    { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
+                if List.length (String.split " or " newQuestion) == 2 then
+                    let
+                        firstSection =
+                            Maybe.withDefault "" (List.head (String.split " or " newQuestion))
+
+                        firstOption =
+                            Maybe.withDefault "" (List.head (List.reverse (String.split " " firstSection)))
+
+                        secondSection =
+                            Maybe.withDefault "" (List.head (List.reverse (String.split " or " newQuestion)))
+
+                        secondOption = Maybe.withDefault "" (List.head (String.split "?" (
+                            Maybe.withDefault "" (List.head (String.split " " secondSection)))))
+                    in
+                    { model | question = newQuestion, answers = addOrOptions firstOption secondOption model.answers }
+                else if List.member (String.toLower firstWord) yesNoWords then
+--                    if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
+                    if not (model.hasEditedAnswers) then
+                        if (List.length model.answers == 2) then
+                            { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
+                        else
+                            { model | question = newQuestion, answers = addYesAndNo model.answers }
+                    else
+                        { model | question = newQuestion }
                 else
                     { model | question = newQuestion }
             else
-                { model | question = newQuestion }
+                if List.length (List.filter (\a -> not(a == "")) model.answers) == 0 then
+                    { model | question = newQuestion, hasEditedAnswers = False }
+                else
+                    { model | question = newQuestion }
 
         ChangeAnswer index newAnswer ->
             let
@@ -91,9 +103,9 @@ update msg model =
                     List.indexedMap (replaceAtIndexWith index newAnswer) model.answers
             in
             if not (List.member "" updatedList) then
-                { model | answers = updatedList ++ [ "" ] }
+                { model | answers = updatedList ++ [ "" ], hasEditedAnswers = True }
             else
-                { model | answers = updatedList }
+                { model | answers = updatedList, hasEditedAnswers = True }
 
         CreatePoll ->
             -- request to api here
