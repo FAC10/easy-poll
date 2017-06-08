@@ -4,6 +4,11 @@ import Html exposing (Attribute, Html, button, div, h1, input, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Style exposing (..)
+import Http
+--import Json.Decode as Decode
+import Json.Encode as Encode
+-- import Json.Encode.Pipeline exposing (encode, required)
+--import Json.Decode.Pipeline exposing (decode, required)
 
 
 main =
@@ -14,14 +19,26 @@ main =
 -- MODEL
 
 
+type alias Question =
+    { id : String
+    , text : String
+    , answers : List Answer
+    }
+
+
+type alias Answer =
+    { text : String
+    , isSelected : Bool
+    , votes : Int
+    }
+
 type Display
     = Create
     | Success
 
 
 type alias Model =
-    { question : String
-    , answers : List String
+    { question : Question
     , display : Display
     , hasEditedAnswers : Bool
     }
@@ -29,8 +46,13 @@ type alias Model =
 
 model : Model
 model =
-    { question = ""
-    , answers = [ "", "" ]
+    { question =
+        { text = ""
+        , id = ""
+        , answers =
+            [
+            ]
+        }
     , display = Create
     , hasEditedAnswers = False
     }
@@ -40,12 +62,63 @@ yesNoWords =
     [ "am", "are", "is", "do", "does", "was", "were", "did", "will", "have", "can", "has", "could", "should", "may", "must", "dare", "ought", "shall", "might", "would" ]
 
 
+-- POST REQUEST
+
+postQuestionData : Question -> Cmd Msg
+postQuestionData question =
+    let
+        url =
+            "http://localhost:4000/questions?id=2"
+        request =
+            Http.post url questionsEncoder
+    in
+        Http.send question request |>
+            { model | display = Success }
+
+
+questionsEncoder : Encode.Encoder (List Question)
+questionsEncoder =
+    Encode.list questionEncoder
+
+questionEncoder : Encode.Encoder Question
+questionEncoder data =
+    case data of
+        Question.id -> Encode.string "id"
+        Question.text -> Encode.string "text"
+        Question.answers -> (Encode.list answerEncoder)
+
+answerEncoder : Encode.Encoder Answer
+answerEncoder =
+    case data of
+        Answer.text -> "text" Encode.string "text"
+        Answer.isSelected -> "isSelected" Encode.bool "isSelected"
+        Answer.votes -> "votes" Encode.int "votes"
+
+
+
+--- IGNORE BELOW
+
+-- getQuestionData : String -> Cmd Msg
+-- getQuestionData questionId =
+--     let
+--         url =
+--             "http://localhost:4000/questions?id=" ++ questionId
+--
+--         request =
+--             Http.get url questionsDecoder
+--     in
+--     Http.send NewQuestion request
+
+
+
+
 
 -- UPDATE
 
 
 type Msg
-    = ChangeQuestion String
+    = NewQuestion (Result Http.Error (List Question))
+    | ChangeQuestion String
     | ChangeAnswer Int String
     | CreatePoll
 
@@ -53,6 +126,12 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        NewQuestion (Ok questionList) ->
+            ( { model | question.text = Maybe.withDefault model.question.text (List.head questionList) }, Cmd.none )
+
+        NewQuestion (Err err) ->
+            ( model, Cmd.none )
+
         ChangeQuestion newQuestion ->
             if not (model.hasEditedAnswers) then
                 let
@@ -79,37 +158,38 @@ update msg model =
                         secondOption = Maybe.withDefault "" (List.head (String.split "?" (
                             Maybe.withDefault "" (List.head (String.split " " secondSection)))))
                     in
-                    { model | question = newQuestion, answers = addOrOptions firstOption secondOption model.answers }
+                    { model | question.text = newQuestion, question.answers = addOrOptions firstOption secondOption model.question.answers }
                 else if List.member (String.toLower firstWord) yesNoWords then
---                    if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
+--                    if List.isEmpty (List.filter (\a -> String.length a > 0) model.question.answers) then
                     if not (model.hasEditedAnswers) then
-                        if (List.length model.answers == 2) then
-                            { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
+                        if (List.length model.question.answers == 2) then
+                            { model | question.text = newQuestion, question.answers = addYesAndNo model.question.answers ++ [ "" ] }
                         else
-                            { model | question = newQuestion, answers = addYesAndNo model.answers }
+                            { model | question.text = newQuestion, question.answers = addYesAndNo model.question.answers }
                     else
-                        { model | question = newQuestion }
+                        { model | question.text = newQuestion }
                 else
-                    { model | question = newQuestion }
+                    { model | question.text = newQuestion }
             else
-                if List.length (List.filter (\a -> not(a == "")) model.answers) == 0 then
-                    { model | question = newQuestion, hasEditedAnswers = False }
+                if List.length (List.filter (\a -> not(a == "")) model.question.answers) == 0 then
+                    { model | question.text = newQuestion, hasEditedAnswers = False }
                 else
-                    { model | question = newQuestion }
+                    { model | question.text = newQuestion }
 
         ChangeAnswer index newAnswer ->
             let
                 updatedList =
-                    List.indexedMap (replaceAtIndexWith index newAnswer) model.answers
+                    List.indexedMap (replaceAtIndexWith index newAnswer) model.question.answers
             in
             if not (List.member "" updatedList) then
-                { model | answers = updatedList ++ [ "" ], hasEditedAnswers = True }
+                { model | question.answers = updatedList ++ [ "" ], hasEditedAnswers = True }
             else
-                { model | answers = updatedList, hasEditedAnswers = True }
+                { model | question.answers = updatedList, hasEditedAnswers = True }
 
         CreatePoll ->
             -- request to api here
-            { model | display = Success }
+            postQuestionData model.question
+            --
 
 
 replaceAtIndexWith : Int -> String -> Int -> String -> String
@@ -156,9 +236,9 @@ view model =
     if model.display == Create then
         div [ containerClass ]
             ([ h1 [ titleClass ] [ text "Easy Poll" ]
-             , textarea [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question ]
+             , textarea [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question.text ]
              ]
-                ++ List.indexedMap renderAnswerField model.answers
+                ++ List.indexedMap renderAnswerField model.question.answers
                 ++ [ button [ createButtonClass, onClick CreatePoll ] [ text "Create!" ]
                    ]
             )
