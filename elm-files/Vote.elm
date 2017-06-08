@@ -54,23 +54,26 @@ model =
     }
 
 
+
 -- REQUEST
+
 
 getQuestionData : String -> Cmd Msg
 getQuestionData questionId =
     let
-      url =
-        "http://localhost:4000/questions?id=" ++ questionId
-      request =
-        Http.get url questionsDecoder
-    in
-      Http.send NewQuestion request
+        url =
+            "http://localhost:4000/questions?id=" ++ questionId
 
+        request =
+            Http.get url questionsDecoder
+    in
+    Http.send NewQuestion request
 
 
 questionsDecoder : Decode.Decoder (List Question)
 questionsDecoder =
     Decode.list questionDecoder
+
 
 answerDecoder : Decode.Decoder Answer
 answerDecoder =
@@ -79,6 +82,7 @@ answerDecoder =
         |> required "isSelected" Decode.bool
         |> required "votes" Decode.int
 
+
 questionDecoder : Decode.Decoder Question
 questionDecoder =
     decode Question
@@ -86,11 +90,14 @@ questionDecoder =
         |> required "text" Decode.string
         |> required "answers" (Decode.list answerDecoder)
 
+
+
 -- INIT and MAIN
+
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
-  ( model, getQuestionData (String.dropLeft 1 location.hash) )
+    ( model, getQuestionData (String.dropLeft 1 location.hash) )
 
 
 main =
@@ -131,14 +138,11 @@ update msg model =
         NewQuestion (Ok questionList) ->
             ( { model | question = Maybe.withDefault model.question (List.head questionList) }, Cmd.none )
 
-
         NewQuestion (Err err) ->
             ( model, Cmd.none )
 
-
         UrlChange location ->
             ( model, getQuestionData (String.dropLeft 1 location.hash) )
-
 
         ToggleAnswer indexToToggle ->
             let
@@ -187,7 +191,7 @@ getVoteGradient model index answer =
 
 renderResultAnswer : Model -> Int -> Answer -> Html Msg
 renderResultAnswer model index answer =
-    div [ answerButtonClass False, style [ ( "background", "linear-gradient(90deg, " ++ (getVoteGradient model) index answer ++ "%, white 0%)" ) ] ]
+    div [ answerButtonClass False, style [ ( "background", "linear-gradient(90deg, " ++ getVoteGradient model index answer ++ "%, white 0%)" ) ] ]
         [ --div [style [("width", "50%"), ("background", "#B1FFBD")]] []
           span [] [ text answer.text ]
         , span [ resultAnswerVotes ] [ text (toString answer.votes ++ " votes") ]

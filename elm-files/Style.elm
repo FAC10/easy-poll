@@ -37,5 +37,6 @@ answerButtonClass isSelected =
     else
         class "center db w-90 center ba bg-white br3 pa3 ma3"
 
+
 resultAnswerVotes =
     class "fr cf"
