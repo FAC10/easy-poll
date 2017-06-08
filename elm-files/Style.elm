@@ -1,6 +1,6 @@
 module Style exposing (..)
 
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, style)
 
 
 containerClass =
@@ -28,6 +28,22 @@ createButtonClass =
 
 
 
+-- success page
+
+
+urlLabelStyle =
+    style [ ( "display", "block" ), ( "text-align", "center" ) ]
+
+
+urlInputClass =
+    class "center tc db w-80 center ba br3 pa3 ma3"
+
+
+successIconStyle =
+    style [ ( "font-size", "15em" ), ( "color", "#357edd" ), ( "display", "block" ), ( "text-align", "center" ), ( "margin", "0.1em" ) ]
+
+
+
 -- Vote page
 
 
@@ -36,6 +52,7 @@ answerButtonClass isSelected =
         class "center db w-90 center ba bg-green br3 pa3 ma3"
     else
         class "center db w-90 center ba bg-white br3 pa3 ma3"
+
 
 resultAnswerVotes =
     class "fr cf"

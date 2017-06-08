@@ -1,6 +1,6 @@
 module Poll exposing (..)
 
-import Html exposing (Attribute, Html, button, div, h1, input, text, textarea)
+import Html exposing (Attribute, Html, button, div, h1, h3, input, label, span, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Style exposing (..)
@@ -23,6 +23,7 @@ type alias Model =
     { question : String
     , answers : List String
     , display : Display
+    , url : String
     }
 
 
@@ -31,6 +32,7 @@ model =
     { question = ""
     , answers = [ "", "" ]
     , display = Create
+    , url = "www.easy-poll.co.uk/#p0ll1d"
     }
 
 
@@ -118,7 +120,11 @@ view model =
             )
     else if model.display == Success then
         div [ containerClass ]
-            [ text "Success Page"
+            [ span [ successIconStyle, class "fa fa-check-circle-o" ] []
+            , h3 [ style [ ( "text-align", "center" ) ] ] [ text "Poll created successfully!" ]
+            , label [ urlLabelStyle ] [ text "Share the following vote URL:" ]
+            , input [ value model.url, urlInputClass ] []
+            , button [ createButtonClass ] [ text "Copy Link!" ]
             ]
     else
         div [] [ text "Something went wrong" ]
