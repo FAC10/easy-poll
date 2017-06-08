@@ -40,6 +40,9 @@ model =
     , answers =
         [ { text = "test answer", isSelected = False, votes = 4 }
         , { text = "test answer 2", isSelected = False, votes = 2 }
+        , { text = "test answer 3", isSelected = False, votes = 20 }
+        , { text = "test answer 4", isSelected = False, votes = 15 }
+        , { text = "test answer 5", isSelected = False, votes = 6 }
         ]
     , display = Voting
     }
@@ -119,13 +122,20 @@ renderAnswerButton index answer =
 --     let percentage = model.answers in
 --         "linear-gradient(90deg, green 50%, white 50%);"
 --     -- "linear-gradient(90deg, green 50%, white 50%);"
+getVoteGradient : Int -> Answer -> String
+getVoteGradient index answer =
+    if Maybe.withDefault 0 (List.maximum (List.map .votes model.answers)) <= answer.votes then
+        "#B1FFBD " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.answers))) * 100)
+    else
+        "#FFB1B1 " ++ toString ((toFloat answer.votes / toFloat (List.sum (List.map .votes model.answers))) * 100)
+
 
 renderResultAnswer : Int -> Answer -> Html Msg
 renderResultAnswer index answer =
-    div [ answerButtonClass False, style [("background", "linear-gradient(90deg, green 50%, white 50%)")] ]
+    div [ answerButtonClass False, style [("background", "linear-gradient(90deg, " ++ (getVoteGradient index answer) ++ "%, white 0%)")] ]
         [ --div [style [("width", "50%"), ("background", "#B1FFBD")]] []
          span [] [text answer.text]
-        , span [] [text ("Votes: " ++ toString answer.votes) ]
+        , span [ resultAnswerVotes ] [text ( toString answer.votes ++ " votes" ) ]
     ]
 
 
