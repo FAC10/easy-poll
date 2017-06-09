@@ -151,7 +151,9 @@ update msg model =
                     containsOr =
                         List.member "or" questionWords
                 in
-                if List.length (String.split " or " newQuestion) == 2 then
+                if newQuestion == "" then
+                    ( { model | question = { question | answers = [ "", "" ] } }, Cmd.none )
+                else if List.length (String.split " or " newQuestion) == 2 then
                     -- if one "or" in the question
                     let
                         firstSection =
