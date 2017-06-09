@@ -1,19 +1,19 @@
 # easy-poll
 Quick and easy poll app using elm.
 
-### how to run locally
-```
-git clone https://github.com/FAC10/easy-poll && cd easy-poll
-npm run build
-```
-Then open public/index.html
-and/or open public/vote.html
+### How to run locally
 ```bash
-open "file://$(pwd)/public/index.html"
-open "file://$(pwd)/public/vote.html"
+git clone https://github.com/FAC10/easy-poll && cd easy-poll
+npm install
+
+# Build Elm files and start server
+npm start
+
+# Open site in browser
+open "http://127.0.0.1:4000/"
 ```
 
-### how to run tests
+### How to run tests
 ```
 elm test
 ```
