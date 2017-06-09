@@ -1,9 +1,13 @@
 module Poll exposing (..)
 
+import Http
 import Html exposing (Attribute, Html, button, div, h1, h3, input, label, span, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Style exposing (..)
+import Vote exposing (Answer, questionDecoder)
+import Json.Encode as Encode
+import Json.Decode as Decode
 
 
 -- MODEL
@@ -24,7 +28,6 @@ type Display
 type alias Model =
     { question : Question
     , display : Display
-    , url : String
     , hasEditedAnswers : Bool
     }
 
@@ -33,12 +36,11 @@ model : Model
 model =
     { question =
         { text = ""
-        , id = ""
+        , id = "needToRandomiseThis"
         , answers =
             [ "", "" ]
         }
     , display = Create
-    , url = "www.easy-poll.co.uk/#p0ll1d"
     , hasEditedAnswers = False
     }
 
@@ -65,6 +67,60 @@ main =
         }
 
 
+-- POST request
+
+type alias QuestionForDb =
+    { id : String
+    , text : String
+    , answers: List Answer
+    }
+
+stringToAnswerObj : String -> Answer
+stringToAnswerObj answerStr =
+    { text = answerStr
+    , isSelected = False
+    , votes = 0
+    }
+
+convertForDb : Question -> QuestionForDb
+-- also remove empty fields
+convertForDb question =
+    { question | answers = List.map stringToAnswerObj (List.filter (\a -> not (a == "")) question.answers) }
+
+
+postQuestionData : QuestionForDb -> Cmd Msg
+postQuestionData question =
+    let
+        url =
+            "http://localhost:4000/questions"
+
+        jsonQuestion = questionEncoder question
+
+        request =
+            Http.post url (Http.jsonBody jsonQuestion) questionDecoder
+
+    in
+    Http.send PollCreated request
+
+
+questionEncoder : QuestionForDb -> Encode.Value
+questionEncoder question = questionObjectifier question
+
+questionObjectifier : QuestionForDb -> Encode.Value
+questionObjectifier question =
+    Encode.object
+        [ ("id", Encode.string question.id)
+        , ("text", Encode.string question.text)
+        , ("answers", Encode.list (List.map answerObjectifier question.answers) )
+        ]
+
+answerObjectifier : Answer -> Encode.Value
+answerObjectifier answer =
+    Encode.object
+        [ ("text", Encode.string answer.text)
+        , ("isSelected", Encode.bool answer.isSelected)
+        , ("votes", Encode.int answer.votes)
+        ]
 
 -- UPDATE
 
@@ -73,6 +129,7 @@ type Msg
     = ChangeQuestion String
     | ChangeAnswer Int String
     | CreatePoll
+    | PollCreated (Result Http.Error Vote.Question)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -149,9 +206,15 @@ update msg model =
                 ( { model | question = { question | answers = updatedList }, hasEditedAnswers = True }, Cmd.none )
 
         CreatePoll ->
-            -- request to api here
+            -- TODO: create loading screen or similar?
+            ( model, postQuestionData (convertForDb model.question) )
+
+        PollCreated (Ok question) ->
             ( { model | display = Success }, Cmd.none )
 
+        PollCreated (Err _) ->
+          -- TODO: improve this?
+            ( model, Cmd.none )
 
 replaceAtIndexWith : Int -> String -> Int -> String -> String
 replaceAtIndexWith replaceIndex newItem currIndex item =
@@ -186,6 +249,10 @@ renderAnswerField index answer =
     input [ type_ "text", answerClass, generatePlaceholder index, value answer, onInput (ChangeAnswer index) ]
         []
 
+createUrl : String -> String
+createUrl id =
+    "http://localhost:4000/vote.html#" ++ id
+
 
 view : Model -> Html Msg
 view model =
@@ -203,7 +270,7 @@ view model =
             [ span [ successIconStyle, class "fa fa-check-circle-o" ] []
             , h3 [ style [ ( "text-align", "center" ) ] ] [ text "Poll created successfully!" ]
             , label [ urlLabelStyle ] [ text "Share the following vote URL:" ]
-            , input [ value model.url, urlInputClass ] []
+            , input [ value (createUrl model.question.id) , urlInputClass ] []
             , button [ createButtonClass ] [ text "Share!" ]
             ]
     else
