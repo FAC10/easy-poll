@@ -8,6 +8,7 @@ import Style exposing (..)
 import Vote exposing (Answer, questionDecoder)
 import Json.Encode as Encode
 import Json.Decode as Decode
+import Random
 
 
 -- MODEL
@@ -55,7 +56,7 @@ yesNoWords =
 
 init : ( Model, Cmd Msg )
 init =
-    ( model, Cmd.none )
+    ( model, Random.generate IdGenerated (Random.int 1000000000000 9999999999999) )
 
 
 main =
@@ -130,6 +131,7 @@ type Msg
     | ChangeAnswer Int String
     | CreatePoll
     | PollCreated (Result Http.Error Vote.Question)
+    | IdGenerated Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -204,6 +206,13 @@ update msg model =
                 ( { model | question = { question | answers = updatedList ++ [ "" ] }, hasEditedAnswers = True }, Cmd.none )
             else
                 ( { model | question = { question | answers = updatedList }, hasEditedAnswers = True }, Cmd.none )
+
+        IdGenerated id ->
+            let
+                question =
+                    model.question
+            in
+                ( { model | question = { question | id = toString id } }, Cmd.none )
 
         CreatePoll ->
             -- TODO: create loading screen or similar?
