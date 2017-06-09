@@ -6,11 +6,6 @@ import Html.Events exposing (onClick, onInput)
 import Style exposing (..)
 
 
-main =
-    Html.beginnerProgram { model = model, view = view, update = update }
-
-
-
 -- MODEL
 
 
@@ -42,6 +37,21 @@ yesNoWords =
     [ "am", "are", "is", "do", "does", "was", "were", "did", "will", "have", "can", "has", "could", "should", "may", "must", "dare", "ought", "shall", "might", "would" ]
 
 
+-- init and main
+
+init : ( Model, Cmd Msg )
+init =
+    ( model, Cmd.none )
+
+
+main =
+    Html.program
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = \_ -> Sub.none
+        }
+
 
 -- UPDATE
 
@@ -52,7 +62,7 @@ type Msg
     | CreatePoll
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ChangeQuestion newQuestion ->
@@ -86,22 +96,22 @@ update msg model =
                                     )
                                 )
                     in
-                    { model | question = newQuestion, answers = addOrOptions firstOption secondOption model.answers }
+                    ( { model | question = newQuestion, answers = addOrOptions firstOption secondOption model.answers }, Cmd.none)
                 else if List.member (String.toLower firstWord) yesNoWords then
                     --                    if List.isEmpty (List.filter (\a -> String.length a > 0) model.answers) then
                     if not model.hasEditedAnswers then
                         if List.length model.answers == 2 then
-                            { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }
+                            ( { model | question = newQuestion, answers = addYesAndNo model.answers ++ [ "" ] }, Cmd.none )
                         else
-                            { model | question = newQuestion, answers = addYesAndNo model.answers }
+                            ( { model | question = newQuestion, answers = addYesAndNo model.answers }, Cmd.none )
                     else
-                        { model | question = newQuestion }
+                        ( { model | question = newQuestion }, Cmd.none )
                 else
-                    { model | question = newQuestion }
+                    ( { model | question = newQuestion }, Cmd.none )
             else if List.length (List.filter (\a -> not (a == "")) model.answers) == 0 then
-                { model | question = newQuestion, hasEditedAnswers = False }
+                ( { model | question = newQuestion, hasEditedAnswers = False }, Cmd.none )
             else
-                { model | question = newQuestion }
+                ( { model | question = newQuestion }, Cmd.none )
 
         ChangeAnswer index newAnswer ->
             let
@@ -109,13 +119,13 @@ update msg model =
                     List.indexedMap (replaceAtIndexWith index newAnswer) model.answers
             in
             if not (List.member "" updatedList) then
-                { model | answers = updatedList ++ [ "" ], hasEditedAnswers = True }
+                ( { model | answers = updatedList ++ [ "" ], hasEditedAnswers = True }, Cmd.none )
             else
-                { model | answers = updatedList, hasEditedAnswers = True }
+                ( { model | answers = updatedList, hasEditedAnswers = True }, Cmd.none )
 
         CreatePoll ->
             -- request to api here
-            { model | display = Success }
+            ( { model | display = Success }, Cmd.none )
 
 
 replaceAtIndexWith : Int -> String -> Int -> String -> String
