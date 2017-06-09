@@ -17,3 +17,8 @@ open "http://127.0.0.1:4000/"
 ```
 elm test
 ```
+
+### Features
+- Submit poll and store it in a database with a POST request
+- Retrieve poll with AJAX using Elm by id
+- Smart answer autofill (tm)
