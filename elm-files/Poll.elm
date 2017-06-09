@@ -152,7 +152,7 @@ update msg model =
                         List.member "or" questionWords
                 in
                 if newQuestion == "" then
-                    ( { model | question = { question | answers = [ "", "" ] } }, Cmd.none )
+                    ( { model | question = { question | text = "", answers = [ "", "" ] } }, Cmd.none )
                 else if List.length (String.split " or " newQuestion) == 2 then
                     -- if one "or" in the question
                     let
