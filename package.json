@@ -8,9 +8,12 @@
   "scripts": {
     "format": "elm-format elm-files/",
     "build": "elm-make elm-files/Poll.elm --output='public/poll.js' && elm-make elm-files/Vote.elm --output='public/vote.js'",
-    "start": "npm run build && node server/api.js"
+    "start": "npm run build && node server/api.js",
+    "server": "node server/api.js"
   },
   "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
     "json-server": "0.9.5"
   }
 }
