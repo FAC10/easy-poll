@@ -6,6 +6,8 @@
   "author": "Matt Lubel <matt_lubel@hotmail.com>",
   "license": "MIT",
   "scripts": {
+    "test": "npm run test-server",
+    "test-server": "node tests/tests.js",
     "format": "elm-format elm-files/",
     "build": "elm-make elm-files/Poll.elm --output='public/poll.js' && elm-make elm-files/Vote.elm --output='public/vote.js'",
     "start": "npm run build && node server/api.js",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "nodemon": "^1.11.0",
+    "supertest": "^3.0.0",
     "tape": "^4.7.0"
   }
 }
