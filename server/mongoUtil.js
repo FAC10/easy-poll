@@ -7,8 +7,9 @@ var _db
 module.exports = {
 
   connect: function(callback) {
-    MongoClient.connect("mongodb://localhost/easypoll", function(err, db) {
+    MongoClient.connect(process.env.DB_URL, (err, db) => {
       _db = db
+      // _db.createCollection("polls", { autoIndexId: false })
       return callback(err)
     })
   },
