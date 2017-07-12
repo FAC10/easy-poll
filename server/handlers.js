@@ -55,7 +55,7 @@ handlers.vote = (req, res) => {
       if (err) {
         return res.send(err)
       }
-      // send back updated poll
-      res.send(poll)
+      // send back updated poll (it is in poll.value)
+      res.send(poll.value)
   })
 }
