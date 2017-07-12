@@ -6,9 +6,9 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Model exposing (Answer, VoteQuestion, questionDecoder)
 import Random
 import Style exposing (..)
-import Vote exposing (Answer, questionDecoder)
 
 
 -- MODEL
@@ -30,6 +30,7 @@ type alias Model =
     { question : Question
     , display : Display
     , hasEditedAnswers : Bool
+    , errorMessage : String
     }
 
 
@@ -43,6 +44,7 @@ model =
         }
     , display = Create
     , hasEditedAnswers = False
+    , errorMessage = ""
     }
 
 
@@ -144,7 +146,7 @@ type Msg
     = ChangeQuestion String
     | ChangeAnswer Int String
     | CreatePoll
-    | PollCreated (Result Http.Error Vote.Question)
+    | PollCreated (Result Http.Error VoteQuestion)
     | IdGenerated Int
 
 
@@ -167,7 +169,9 @@ update msg model =
                     containsOr =
                         List.member "or" questionWords
                 in
-                if List.length (String.split " or " newQuestion) == 2 then
+                if newQuestion == "" then
+                    ( { model | question = { question | text = "", answers = [ "", "" ] } }, Cmd.none )
+                else if List.length (String.split " or " newQuestion) == 2 then
                     -- if one "or" in the question
                     let
                         firstSection =
@@ -190,23 +194,23 @@ update msg model =
                         updatedQuestion =
                             { question | text = newQuestion, answers = addOrOptions firstOption secondOption question.answers }
                     in
-                    ( { model | question = updatedQuestion }, Cmd.none )
+                    ( { model | errorMessage = "", question = updatedQuestion }, Cmd.none )
                 else if List.member (String.toLower firstWord) yesNoWords then
                     -- if question begins with a yes or no word
                     if not model.hasEditedAnswers then
                         if List.length model.question.answers == 2 then
-                            ( { model | question = { question | text = newQuestion, answers = addYesAndNo model.question.answers ++ [ "" ] } }, Cmd.none )
+                            ( { model | errorMessage = "", question = { question | text = newQuestion, answers = addYesAndNo model.question.answers ++ [ "" ] } }, Cmd.none )
                         else
-                            ( { model | question = { question | text = newQuestion, answers = addYesAndNo model.question.answers } }, Cmd.none )
+                            ( { model | errorMessage = "", question = { question | text = newQuestion, answers = addYesAndNo model.question.answers } }, Cmd.none )
                     else
-                        ( { model | question = { question | text = newQuestion } }, Cmd.none )
+                        ( { model | errorMessage = "", question = { question | text = newQuestion } }, Cmd.none )
                 else
-                    ( { model | question = { question | text = newQuestion } }, Cmd.none )
+                    ( { model | errorMessage = "", question = { question | text = newQuestion } }, Cmd.none )
             else if List.length (List.filter (\a -> not (a == "")) model.question.answers) == 0 then
                 -- if all answers are empty strings
-                ( { model | question = { question | text = newQuestion }, hasEditedAnswers = False }, Cmd.none )
+                ( { model | errorMessage = "", question = { question | text = newQuestion }, hasEditedAnswers = False }, Cmd.none )
             else
-                ( { model | question = { question | text = newQuestion } }, Cmd.none )
+                ( { model | errorMessage = "", question = { question | text = newQuestion } }, Cmd.none )
 
         ChangeAnswer index newAnswer ->
             let
@@ -217,9 +221,9 @@ update msg model =
                     model.question
             in
             if not (List.member "" updatedList) then
-                ( { model | question = { question | answers = updatedList ++ [ "" ] }, hasEditedAnswers = True }, Cmd.none )
+                ( { model | errorMessage = "", question = { question | answers = updatedList ++ [ "" ] }, hasEditedAnswers = True }, Cmd.none )
             else
-                ( { model | question = { question | answers = updatedList }, hasEditedAnswers = True }, Cmd.none )
+                ( { model | errorMessage = "", question = { question | answers = updatedList }, hasEditedAnswers = True }, Cmd.none )
 
         IdGenerated id ->
             let
@@ -229,8 +233,14 @@ update msg model =
             ( { model | question = { question | id = toString id } }, Cmd.none )
 
         CreatePoll ->
-            -- TODO: create loading screen or similar?
-            ( model, postQuestionData (convertForDb model.question) )
+            -- Validation, should really be abstracted into a utility function
+            if String.isEmpty <| String.trim model.question.text then
+                ( { model | errorMessage = "Please enter a question." }, Cmd.none )
+            else if List.length (List.filter (\a -> not (String.isEmpty <| String.trim a)) model.question.answers) < 2 then
+                ( { model | errorMessage = "Please enter at least 2 possible answers." }, Cmd.none )
+            else
+                -- TODO: create loading screen or similar?
+                ( model, postQuestionData (convertForDb model.question) )
 
         PollCreated (Ok question) ->
             ( { model | display = Success }, Cmd.none )
@@ -287,7 +297,8 @@ view model =
              , textarea [ questionClass, placeholder "Your question here!", onInput ChangeQuestion ] [ text model.question.text ]
              ]
                 ++ List.indexedMap renderAnswerField model.question.answers
-                ++ [ button [ createButtonClass, onClick CreatePoll ] [ text "Create!" ]
+                ++ [ span [ errorMessageClass ] [ text model.errorMessage ]
+                   , button [ createButtonClass, onClick CreatePoll ] [ text "Create!" ]
                    ]
             )
     else if model.display == Success then
