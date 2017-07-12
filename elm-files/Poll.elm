@@ -1,14 +1,14 @@
 module Poll exposing (..)
 
-import Http
 import Html exposing (Attribute, Html, button, div, h1, h3, input, label, span, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
+import Http
+import Json.Decode as Decode
+import Json.Encode as Encode
+import Random
 import Style exposing (..)
 import Vote exposing (Answer, questionDecoder)
-import Json.Encode as Encode
-import Json.Decode as Decode
-import Random
 
 
 -- MODEL
@@ -68,13 +68,16 @@ main =
         }
 
 
+
 -- POST request
+
 
 type alias QuestionForDb =
     { id : String
     , text : String
-    , answers: List Answer
+    , answers : List Answer
     }
+
 
 stringToAnswerObj : String -> Answer
 stringToAnswerObj answerStr =
@@ -83,8 +86,14 @@ stringToAnswerObj answerStr =
     , votes = 0
     }
 
+
 convertForDb : Question -> QuestionForDb
+
+
+
 -- also remove empty fields
+
+
 convertForDb question =
     { question | answers = List.map stringToAnswerObj (List.filter (\a -> not (a == "")) question.answers) }
 
@@ -95,33 +104,38 @@ postQuestionData question =
         url =
             "http://localhost:4000/questions"
 
-        jsonQuestion = questionEncoder question
+        jsonQuestion =
+            questionEncoder question
 
         request =
             Http.post url (Http.jsonBody jsonQuestion) questionDecoder
-
     in
     Http.send PollCreated request
 
 
 questionEncoder : QuestionForDb -> Encode.Value
-questionEncoder question = questionObjectifier question
+questionEncoder question =
+    questionObjectifier question
+
 
 questionObjectifier : QuestionForDb -> Encode.Value
 questionObjectifier question =
     Encode.object
-        [ ("id", Encode.string question.id)
-        , ("text", Encode.string question.text)
-        , ("answers", Encode.list (List.map answerObjectifier question.answers) )
+        [ ( "id", Encode.string question.id )
+        , ( "text", Encode.string question.text )
+        , ( "answers", Encode.list (List.map answerObjectifier question.answers) )
         ]
+
 
 answerObjectifier : Answer -> Encode.Value
 answerObjectifier answer =
     Encode.object
-        [ ("text", Encode.string answer.text)
-        , ("isSelected", Encode.bool answer.isSelected)
-        , ("votes", Encode.int answer.votes)
+        [ ( "text", Encode.string answer.text )
+        , ( "isSelected", Encode.bool answer.isSelected )
+        , ( "votes", Encode.int answer.votes )
         ]
+
+
 
 -- UPDATE
 
@@ -212,7 +226,7 @@ update msg model =
                 question =
                     model.question
             in
-                ( { model | question = { question | id = toString id } }, Cmd.none )
+            ( { model | question = { question | id = toString id } }, Cmd.none )
 
         CreatePoll ->
             -- TODO: create loading screen or similar?
@@ -222,8 +236,9 @@ update msg model =
             ( { model | display = Success }, Cmd.none )
 
         PollCreated (Err _) ->
-          -- TODO: improve this?
+            -- TODO: improve this?
             ( model, Cmd.none )
+
 
 replaceAtIndexWith : Int -> String -> Int -> String -> String
 replaceAtIndexWith replaceIndex newItem currIndex item =
@@ -258,6 +273,7 @@ renderAnswerField index answer =
     input [ type_ "text", answerClass, generatePlaceholder index, value answer, onInput (ChangeAnswer index) ]
         []
 
+
 createUrl : String -> String
 createUrl id =
     "http://localhost:4000/vote.html#" ++ id
@@ -279,7 +295,7 @@ view model =
             [ span [ successIconStyle, class "fa fa-check-circle-o" ] []
             , h3 [ style [ ( "text-align", "center" ) ] ] [ text "Poll created successfully!" ]
             , label [ urlLabelStyle ] [ text "Share the following vote URL:" ]
-            , input [ value (createUrl model.question.id) , urlInputClass ] []
+            , input [ value (createUrl model.question.id), urlInputClass ] []
             , button [ createButtonClass ] [ text "Share!" ]
             ]
     else
