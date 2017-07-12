@@ -10,11 +10,13 @@ type alias Answer =
     , votes : Int
     }
 
+
 type alias VoteQuestion =
     { id : String
     , text : String
     , answers : List Answer
     }
+
 
 answerDecoder : Decode.Decoder Answer
 answerDecoder =
@@ -22,6 +24,7 @@ answerDecoder =
         |> required "text" Decode.string
         |> required "isSelected" Decode.bool
         |> required "votes" Decode.int
+
 
 questionDecoder : Decode.Decoder VoteQuestion
 questionDecoder =
