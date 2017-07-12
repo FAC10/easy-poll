@@ -5,7 +5,7 @@ import Html exposing (Attribute, Html, button, div, h1, h3, input, label, span, 
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Style exposing (..)
-import Vote exposing (Answer, questionDecoder)
+import Model exposing (Answer, VoteQuestion, questionDecoder)
 import Json.Encode as Encode
 import Json.Decode as Decode
 import Random
@@ -132,7 +132,7 @@ type Msg
     = ChangeQuestion String
     | ChangeAnswer Int String
     | CreatePoll
-    | PollCreated (Result Http.Error Vote.Question)
+    | PollCreated (Result Http.Error VoteQuestion)
     | IdGenerated Int
 
 
