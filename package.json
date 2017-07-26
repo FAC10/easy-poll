@@ -16,8 +16,10 @@
   },
   "dependencies": {
     "body-parser": "^1.17.2",
+    "dotenv": "^4.0.0",
     "express": "^4.15.3",
-    "json-server": "0.9.5"
+    "json-server": "0.9.5",
+    "mongodb": "^2.2.30"
   },
   "devDependencies": {
     "nodemon": "^1.11.0",
