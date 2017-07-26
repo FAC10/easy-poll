@@ -27,6 +27,10 @@ createButtonClass =
     class "center db w4 br-pill ba bw2 b--yellow bg-white pa3 ma4"
 
 
+errorMessageClass =
+    class "tc db red"
+
+
 
 -- success page
 
