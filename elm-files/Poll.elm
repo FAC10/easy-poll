@@ -192,7 +192,7 @@ update msg model =
                                 )
 
                         updatedQuestion =
-                            { question | text = newQuestion, answers = addOrOptions firstOption secondOption question.answers }
+                            { question | text = newQuestion, answers = addEmptyThirdOptionIfNeedsBe (addOrOptions firstOption secondOption question.answers) }
                     in
                     ( { model | errorMessage = "", question = updatedQuestion }, Cmd.none )
                 else if List.member (String.toLower firstWord) yesNoWords then
@@ -257,6 +257,13 @@ replaceAtIndexWith replaceIndex newItem currIndex item =
     else
         item
 
+
+addEmptyThirdOptionIfNeedsBe : List String -> List String
+addEmptyThirdOptionIfNeedsBe answers = 
+    if List.length answers == 2 then
+        answers ++ [""]
+    else
+        answers
 
 addOrOptions : String -> String -> List String -> List String
 addOrOptions opt1 opt2 list =
