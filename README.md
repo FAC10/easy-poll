@@ -3,14 +3,16 @@ Quick and easy poll app using elm.
 
 ### How to run locally
 
-requirements: MongoDB
+**requirements:** MongoDB, Elm
 
 ```bash
 git clone https://github.com/FAC10/easy-poll && cd easy-poll
 npm install
 ```
 
-Create a ```.env``` file in the root of the project, add supply a DB_URL variable e.g. ```DB_URL=mongodb://localhost/easypoll```
+Create a ```.env``` file in the root of the project with a DB_URL variable e.g. ```DB_URL=mongodb://localhost/easypoll```
+
+Ensure mongo is running. 
 
 ```bash
 # Build Elm files and start server
