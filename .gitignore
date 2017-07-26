@@ -1,5 +1,6 @@
 elm-stuff/
 poll.js
 yarn.lock
+package-lock.json
 node_modules
 public/*.js
