@@ -6,6 +6,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (decode, required)
+import Json.Encode as Encode
 import Navigation
 import Style exposing (..)
 
@@ -34,6 +35,7 @@ type Display
 
 type alias Model =
     { question : Question
+    , selectedIndex : Int
     , display : Display
     }
 
@@ -46,6 +48,7 @@ model =
         , answers =
             []
         }
+    , selectedIndex = -1
     , display = Voting
     }
 
@@ -58,12 +61,35 @@ getQuestionData : String -> Cmd Msg
 getQuestionData questionId =
     let
         url =
-            "http://localhost:4000/questions?id=" ++ questionId
+            "http://localhost:4000/questions/" ++ questionId
 
         request =
             Http.get url questionsDecoder
     in
     Http.send NewQuestion request
+
+
+voteForAnswer : String -> Int -> Cmd Msg
+voteForAnswer questionId selectedIndex =
+    -- need to add what to do if selectedIndex is -1
+    let
+        url =
+            "http://localhost:4000/questions/" ++ questionId ++ "/vote"
+
+        jsonIndex =
+            indexEncoder selectedIndex
+
+        request =
+            Http.post url (Http.jsonBody jsonIndex) questionDecoder
+    in
+    Http.send ResultsReceived request
+
+
+indexEncoder : Int -> Encode.Value
+indexEncoder index =
+    Encode.object
+        [ ( "index", Encode.int index )
+        ]
 
 
 questionsDecoder : Decode.Decoder (List Question)
@@ -121,11 +147,20 @@ toggleSpecificAnswer indexToToggle answers =
         answers
 
 
+updateSelectedIndex : Int -> Int -> Int
+updateSelectedIndex curr new =
+    if curr == new then
+        -1
+    else
+        new
+
+
 type Msg
     = NewQuestion (Result Http.Error (List Question))
     | UrlChange Navigation.Location
     | ToggleAnswer Int
     | Vote
+    | ResultsReceived (Result Http.Error Question)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -148,15 +183,24 @@ update msg model =
                 updatedAnswers =
                     toggleSpecificAnswer indexToToggle model.question.answers
 
+                updatedSelectedIndex =
+                    updateSelectedIndex model.selectedIndex indexToToggle
+
                 updatedQuestion =
                     { question | answers = updatedAnswers }
 
                 -- = { model.question | answers = ( toggleSpecificAnswer indexToToggle model.question.answers ) }
             in
-            ( { model | question = updatedQuestion }, Cmd.none )
+            ( { model | question = updatedQuestion, selectedIndex = updatedSelectedIndex }, Cmd.none )
 
         Vote ->
-            ( { model | display = Result }, Cmd.none )
+            ( { model | display = Result }, voteForAnswer model.question.id model.selectedIndex )
+
+        ResultsReceived (Ok question) ->
+            ( { model | question = question }, Cmd.none )
+
+        ResultsReceived (Err err) ->
+            ( model, Cmd.none )
 
 
 
