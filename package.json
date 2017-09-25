@@ -6,13 +6,13 @@
   "author": "Matt Lubel <matt_lubel@hotmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "npm run test-server",
-    "test-server": "node tests/tests.js",
+    "test": "node tests/tests.js",
+    "start": "node server/start_server.js",
+
     "format": "elm-format elm-files/",
     "build": "elm-make elm-files/Poll.elm --output='public/poll.js' && elm-make elm-files/Vote.elm --output='public/vote.js'",
-    "start": "npm run build && node server/start_server.js",
-    "server": "node server/start_server.js",
-    "dev-server": "./node_modules/.bin/nodemon server/start_server.js"
+    
+    "start:dev": "./node_modules/.bin/nodemon server/start_server.js"
   },
   "dependencies": {
     "body-parser": "^1.17.2",

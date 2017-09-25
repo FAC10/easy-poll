@@ -1,0 +1,14 @@
+{
+  "env": {
+    "ELM_COMPILE": "elm-make elm-files/Poll.elm --output=public/poll.js",
+    "ELM_COMPILE_2": "elm-make elm-files/Vote.elm --output=public/vote.js"
+  },
+  "buildpacks": [
+    {
+      "url": "https://github.com/mattlub/heroku-buildpack-elm.git"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
