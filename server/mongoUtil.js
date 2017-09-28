@@ -2,12 +2,16 @@
 
 const MongoClient = require('mongodb').MongoClient
 
+const dbUrl = process.env.DB_URL
+
+if (!dbUrl) throw new Error('DB_URL must be set in a .env file')
+
 var _db
 
 module.exports = {
 
   connect: function(callback) {
-    MongoClient.connect(process.env.DB_URL, (err, db) => {
+    MongoClient.connect(dbUrl, (err, db) => {
       _db = db
       // _db.createCollection("polls", { autoIndexId: false })
       return callback(err)
