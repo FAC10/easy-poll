@@ -37,6 +37,7 @@ type alias Model =
     { question : Question
     , selectedIndex : Int
     , display : Display
+    , baseUrl : String
     }
 
 
@@ -50,6 +51,7 @@ model =
         }
     , selectedIndex = -1
     , display = Voting
+    , baseUrl = ""
     }
 
 
@@ -57,11 +59,11 @@ model =
 -- REQUEST
 
 
-getQuestionData : String -> Cmd Msg
-getQuestionData questionId =
+getQuestionData : String -> String -> Cmd Msg
+getQuestionData baseUrl questionId =
     let
         url =
-            "http://localhost:4000/questions/" ++ questionId
+            baseUrl ++ "/questions/" ++ questionId
 
         request =
             Http.get url questionsDecoder
@@ -69,12 +71,12 @@ getQuestionData questionId =
     Http.send NewQuestion request
 
 
-voteForAnswer : String -> Int -> Cmd Msg
-voteForAnswer questionId selectedIndex =
+voteForAnswer : String -> String -> Int -> Cmd Msg
+voteForAnswer baseUrl questionId selectedIndex =
     -- need to add what to do if selectedIndex is -1
     let
         url =
-            "http://localhost:4000/questions/" ++ questionId ++ "/vote"
+            baseUrl ++ "/questions/" ++ questionId ++ "/vote"
 
         jsonIndex =
             indexEncoder selectedIndex
@@ -116,14 +118,20 @@ questionDecoder =
 
 -- INIT and MAIN
 
+type alias Flags =
+  { baseUrl : String
+  }
 
-init : Navigation.Location -> ( Model, Cmd Msg )
-init location =
-    ( model, getQuestionData (String.dropLeft 1 location.hash) )
+
+init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
+init flags location =
+    ( { model | baseUrl = flags.baseUrl }
+    , getQuestionData flags.baseUrl (String.dropLeft 1 location.hash)
+    )
 
 
 main =
-    Navigation.program UrlChange
+    Navigation.programWithFlags UrlChange
         { init = init
         , view = view
         , update = update
@@ -173,7 +181,7 @@ update msg model =
             ( model, Cmd.none )
 
         UrlChange location ->
-            ( model, getQuestionData (String.dropLeft 1 location.hash) )
+            ( model, getQuestionData model.baseUrl (String.dropLeft 1 location.hash) )
 
         ToggleAnswer indexToToggle ->
             let
@@ -194,7 +202,7 @@ update msg model =
             ( { model | question = updatedQuestion, selectedIndex = updatedSelectedIndex }, Cmd.none )
 
         Vote ->
-            ( { model | display = Result }, voteForAnswer model.question.id model.selectedIndex )
+            ( { model | display = Result }, voteForAnswer model.baseUrl model.question.id model.selectedIndex )
 
         ResultsReceived (Ok question) ->
             ( { model | question = question }, Cmd.none )

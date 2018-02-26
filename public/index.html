@@ -10,6 +10,10 @@
     <script type="text/javascript" src="./poll.js"></script>
   </head>
   <body>
-    <script type="text/javascript">Elm.Poll.fullscreen()</script>
+    <script type="text/javascript">
+      Elm.Poll.fullscreen({
+        baseUrl: '{{baseUrl}}'
+      })
+    </script>
   </body>
 </html>
