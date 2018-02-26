@@ -31,6 +31,7 @@ type alias Model =
     , display : Display
     , hasEditedAnswers : Bool
     , errorMessage : String
+    , baseUrl: String
     }
 
 
@@ -45,6 +46,7 @@ model =
     , display = Create
     , hasEditedAnswers = False
     , errorMessage = ""
+    , baseUrl = ""
     }
 
 
@@ -55,20 +57,23 @@ yesNoWords =
 
 -- init and main
 
+type alias Flags =
+  { baseUrl : String
+  }
 
-init : ( Model, Cmd Msg )
-init =
-    ( model, Random.generate IdGenerated (Random.int 1000000000000 9999999999999) )
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( { model | baseUrl = flags.baseUrl } , Random.generate IdGenerated (Random.int 1000000000000 9999999999999) )
 
 
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
         }
-
 
 
 -- POST request
@@ -100,11 +105,11 @@ convertForDb question =
     { question | answers = List.map stringToAnswerObj (List.filter (\a -> not (a == "")) question.answers) }
 
 
-postQuestionData : QuestionForDb -> Cmd Msg
-postQuestionData question =
+postQuestionData : String -> QuestionForDb -> Cmd Msg
+postQuestionData baseUrl question =
     let
         url =
-            "http://localhost:4000/questions"
+            baseUrl ++ "/questions"
 
         jsonQuestion =
             questionEncoder question
@@ -208,7 +213,8 @@ update msg model =
                     ( { model | errorMessage = "", question = { question | text = newQuestion } }, Cmd.none )
             else if List.length (List.filter (\a -> not (a == "")) model.question.answers) == 0 then
                 -- if all answers are empty strings
-                ( { model | errorMessage = "", question = { question | text = newQuestion }, hasEditedAnswers = False }, Cmd.none )
+                ( { model | errorMessage = "", question = { question | text = newQuestion, answers =
+            [ "", "" ] }, hasEditedAnswers = False }, Cmd.none )
             else
                 ( { model | errorMessage = "", question = { question | text = newQuestion } }, Cmd.none )
 
@@ -240,7 +246,7 @@ update msg model =
                 ( { model | errorMessage = "Please enter at least 2 possible answers." }, Cmd.none )
             else
                 -- TODO: create loading screen or similar?
-                ( model, postQuestionData (convertForDb model.question) )
+                ( model, postQuestionData model.baseUrl (convertForDb model.question) )
 
         PollCreated (Ok question) ->
             ( { model | display = Success }, Cmd.none )
@@ -284,9 +290,9 @@ renderAnswerField index answer =
         []
 
 
-createUrl : String -> String
-createUrl id =
-    "http://localhost:4000/vote.html#" ++ id
+createVoteUrl : String -> String -> String
+createVoteUrl baseUrl id =
+    baseUrl ++ "/vote#" ++ id
 
 
 view : Model -> Html Msg
@@ -306,7 +312,7 @@ view model =
             [ span [ successIconStyle, class "fa fa-check-circle-o" ] []
             , h3 [ style [ ( "text-align", "center" ) ] ] [ text "Poll created successfully!" ]
             , label [ urlLabelStyle ] [ text "Share the following vote URL:" ]
-            , input [ value (createUrl model.question.id), urlInputClass ] []
+            , input [ value (createVoteUrl model.baseUrl model.question.id), urlInputClass ] []
             , button [ createButtonClass ] [ text "Share!" ]
             ]
     else

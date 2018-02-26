@@ -9,6 +9,10 @@
     <script type="text/javascript" src="./vote.js"></script>
   </head>
   <body>
-    <script type="text/javascript">Elm.Vote.fullscreen()</script>
+    <script type="text/javascript">
+      Elm.Vote.fullscreen({
+        baseUrl: '{{baseUrl}}'
+      })
+    </script>
   </body>
 </html>
